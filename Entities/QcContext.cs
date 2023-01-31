@@ -3,20 +3,16 @@ using multi_hosp_demo.MultiHosp;
 
 namespace multi_hosp_demo.Entities
 {
-    public class QcContext : DbContext
+    public class QcContext : MultiHospDbContext
     {
-        private string _hospCode;
-        public QcContext(DbContextOptions<QcContext> options, IMultiHospProvider multiHospProvider) : base(options)
+        public QcContext(IMultiHospProvider multiHospProvider, DbContextOptions<QcContext> options) : base(multiHospProvider, options)
         {
-            _hospCode = multiHospProvider?.GetHospCode();
         }
         public virtual DbSet<ExtDept> ExtDepts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<ExtDept>().HasQueryFilter(e => e.HospCode == _hospCode);
         }
     }
 }

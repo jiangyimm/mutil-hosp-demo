@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace multi_hosp_demo.Entities
 {
     [Table("ext_dept", Schema = "mrqcs")]
-    public class ExtDept
+    public class ExtDept : MultiHospEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -19,9 +19,5 @@ namespace multi_hosp_demo.Entities
         /// </summary>
         [Required]
         public string DeptName { get; set; }
-        /// <summary>
-        /// 院区代码
-        /// </summary>
-        public string HospCode { get; set; }
     }
 }
