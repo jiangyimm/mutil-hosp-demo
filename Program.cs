@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using multi_hosp_demo.Controllers;
 using multi_hosp_demo.Entities;
 using multi_hosp_demo.MultiHosp;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -23,6 +24,9 @@ builder.Services.AddDbContext<QcContext>(option => option.UseNpgsql(builder.Conf
 
 //AddMultiHosp
 builder.Services.AddMultiHosp();
+
+builder.Services.AddScoped<IService, ServiceA>();
+builder.Services.AddScoped<IService, ServiceB>();
 
 var app = builder.Build();
 

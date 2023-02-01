@@ -12,10 +12,23 @@ namespace multi_hosp_demo.Controllers
         QcContext _context;
         IServiceProvider _serviceProvider;
 
-        public MultiHospController(QcContext context, IServiceProvider serviceProvider)
+        IService _service;
+
+        public MultiHospController(QcContext context,
+         IServiceProvider serviceProvider,
+         IMultiHospProvider multiHospProvider,
+         IEnumerable<IService> services)
         {
             _context = context;
             _serviceProvider = serviceProvider;
+            _service = services.First(p => p.Key == multiHospProvider.GetHospCode());
+        }
+
+        [HttpGet("dynamic-service")]
+        public async Task<IActionResult> DynamicService()
+        {
+            var result = _service.GetKey();
+            return Ok(result);
         }
 
         /// <summary>
