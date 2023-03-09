@@ -1,8 +1,10 @@
+using System.ServiceModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using multi_hosp_demo.Controllers;
 using multi_hosp_demo.Entities;
 using multi_hosp_demo.MultiHosp;
+using SoapCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +30,9 @@ builder.Services.AddMultiHosp();
 builder.Services.AddScoped<IService, ServiceA>();
 builder.Services.AddScoped<IService, ServiceB>();
 
+builder.Services.AddSoapCore();
+builder.Services.AddSingleton<ISampleService, SampleService>();
+
 var app = builder.Build();
 
 //UseMultiHosp
@@ -49,6 +54,12 @@ app.MapControllers();
 var qcContext = app.Services.CreateScope().ServiceProvider.GetService<QcContext>();
 await qcContext.Database.MigrateAsync();
 
+app.UseRouting();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.UseSoapEndpoint<ISampleService>("/ServicePath.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
+});
 app.Run();
 
 
