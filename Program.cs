@@ -31,7 +31,7 @@ builder.Services.AddScoped<IService, ServiceA>();
 builder.Services.AddScoped<IService, ServiceB>();
 
 builder.Services.AddSoapCore();
-builder.Services.AddSingleton<ISampleService, SampleService>();
+builder.Services.AddScoped<ISampleService, SampleService>();
 
 var app = builder.Build();
 
@@ -59,6 +59,10 @@ app.UseRouting();
 app.UseEndpoints(endpoints =>
 {
     endpoints.UseSoapEndpoint<ISampleService>("/ServicePath.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
+});
+app.UseEndpoints(endpoints =>
+{
+    endpoints.UseSoapEndpoint<ISampleService>("/ServicePath1.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
 });
 app.Run();
 

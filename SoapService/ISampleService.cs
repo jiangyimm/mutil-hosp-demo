@@ -1,17 +1,27 @@
 using System.ServiceModel;
+using multi_hosp_demo.Entities;
 
 [ServiceContract]
 public interface ISampleService
 {
     [OperationContract]
-    string Test(string s);
+    string HIPMessageServer(string action, string message);
 }
 
 public class SampleService : ISampleService
 {
-    public string Test(string s)
+    QcContext _dbContext;
+
+    public SampleService(QcContext dbContext)
     {
-        Console.WriteLine("Test Method Executed!");
-        return s;
+        _dbContext = dbContext;
+    }
+
+    public string HIPMessageServer(string action, string message)
+    {
+        //var str = message.ReadAsStringAsync();
+        // using var reader = new StreamReader(message);
+        // var msg = reader.ReadToEnd();
+        return message;
     }
 }
