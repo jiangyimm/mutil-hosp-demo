@@ -21,7 +21,7 @@ namespace multi_hosp_demo.Controllers
         {
             _context = context;
             _serviceProvider = serviceProvider;
-            _service = services.First(p => p.Key == multiHospProvider.GetHospCode());
+            //_service = services.First(p => p.Key == multiHospProvider.GetHospCode());
         }
 
         [HttpGet("dynamic-service")]
