@@ -64,9 +64,13 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.UseSoapEndpoint<ISampleService>("/ServicePath1.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
 });
+
+Task.Run(() => new Publisher().StartBasicPublish());
+Task.Run(() => new Consumer().StartBasicConsumer1());
+Task.Run(() => new Consumer().StartBasicConsumer2());
+Task.Run(() => new Consumer().StartBasicConsumer3());
+
 app.Run();
-
-
 public class AddHospCodeHeaderFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
