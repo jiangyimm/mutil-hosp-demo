@@ -1,4 +1,7 @@
 using System.ServiceModel;
+using Jiangyi.EventBus;
+using Jiangyi.EventBus.Abstractions;
+using Jiangyi.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using multi_hosp_demo.Controllers;
@@ -33,6 +36,8 @@ builder.Services.AddScoped<IService, ServiceB>();
 builder.Services.AddSoapCore();
 builder.Services.AddScoped<ISampleService, SampleService>();
 
+builder.Services.AddRabbitMQ();
+
 var app = builder.Build();
 
 //UseMultiHosp
@@ -65,10 +70,16 @@ app.UseEndpoints(endpoints =>
     endpoints.UseSoapEndpoint<ISampleService>("/ServicePath1.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
 });
 
-Task.Run(() => new Publisher().StartBasicPublish());
-Task.Run(() => new Consumer().StartBasicConsumer1());
-Task.Run(() => new Consumer().StartBasicConsumer2());
-Task.Run(() => new Consumer().StartBasicConsumer3());
+// Task.Run(() => new Publisher().StartBasicPublish());
+// Task.Run(() => new Consumer().StartBasicConsumer1());
+// Task.Run(() => new Consumer().StartBasicConsumer2());
+// Task.Run(() => new Consumer().StartBasicConsumer3());
+
+var eventBus = app.Services.GetRequiredService<IEventBus>();
+
+eventBus.Subscribe<OrderIntegrationEvent, OrderIntegrationEventHandler1>();
+eventBus.Subscribe<OrderIntegrationEvent, OrderIntegrationEventHandler2>();
+
 
 app.Run();
 public class AddHospCodeHeaderFilter : IOperationFilter
