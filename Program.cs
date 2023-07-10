@@ -36,7 +36,14 @@ builder.Services.AddScoped<IService, ServiceB>();
 builder.Services.AddSoapCore();
 builder.Services.AddScoped<ISampleService, SampleService>();
 
-builder.Services.AddRabbitMQ();
+builder.Services.AddRabbitMQ(option =>
+{
+    option.Uri = new Uri("amqp://guest:guest@localhost:5672/");
+    option.SubscriptionClientName = "Order";
+    option.RetryCount = 5;
+});
+builder.Services.AddTransient<OrderIntegrationEventHandler1>();
+builder.Services.AddTransient<OrderIntegrationEventHandler2>();
 
 var app = builder.Build();
 
