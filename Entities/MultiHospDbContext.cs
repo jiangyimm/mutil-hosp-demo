@@ -5,10 +5,10 @@ using multi_hosp_demo.MultiHosp;
 
 namespace multi_hosp_demo.Entities
 {
-    public class MultiHospDbContext : DbContext
+    public class MultiHospDbContext : QcContext
     {
         private string _hospCode;
-        public MultiHospDbContext(IMultiHospProvider multiHospProvider, DbContextOptions<QcContext> options) : base(options)
+        public MultiHospDbContext(IMultiHospProvider multiHospProvider, DbContextOptions options) : base(options)
         {
             _hospCode = multiHospProvider?.GetHospCode();
         }

@@ -1,10 +1,5 @@
-using System.ServiceModel;
-using Jiangyi.EventBus;
-using Jiangyi.EventBus.Abstractions;
-using Jiangyi.Test;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using multi_hosp_demo.Controllers;
 using multi_hosp_demo.Entities;
 using multi_hosp_demo.MultiHosp;
 using SoapCore;
@@ -19,13 +14,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(p => p.OperationFilter<AddHospCodeHeaderFilter>());
 
-builder.Services.AddDbContext<QcContext>(option => option.UseNpgsql(builder.Configuration["DbconnectString:Control"],
-                option =>
-                {
-                    //option.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "control");
-                    //option.MaxBatchSize(100);
-                    //option.MigrationsAssembly("Synyi.Record.QualityControl.Service");
-                }));
+var isMultiHosp = builder.Configuration.GetValue<bool>("IsMultiHospital");
+if (isMultiHosp)
+{
+    builder.Services.AddDbContext<QcContext, MultiHospDbContext>(option =>
+            option.UseNpgsql(builder.Configuration["DbconnectString:Control"]));
+}
+else
+{
+    builder.Services.AddDbContext<QcContext>(option =>
+            option.UseNpgsql(builder.Configuration["DbconnectString:Control"]));
+}
+
 
 //AddMultiHosp
 builder.Services.AddMultiHosp();
@@ -35,15 +35,6 @@ builder.Services.AddScoped<IService, ServiceB>();
 
 builder.Services.AddSoapCore();
 builder.Services.AddScoped<ISampleService, SampleService>();
-
-builder.Services.AddRabbitMQ(option =>
-{
-    option.Uri = new Uri("amqp://guest:guest@localhost:5672/");
-    option.SubscriptionClientName = "Order";
-    option.RetryCount = 5;
-});
-builder.Services.AddTransient<OrderIntegrationEventHandler1>();
-builder.Services.AddTransient<OrderIntegrationEventHandler2>();
 
 var app = builder.Build();
 
@@ -76,17 +67,6 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.UseSoapEndpoint<ISampleService>("/ServicePath1.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
 });
-
-// Task.Run(() => new Publisher().StartBasicPublish());
-// Task.Run(() => new Consumer().StartBasicConsumer1());
-// Task.Run(() => new Consumer().StartBasicConsumer2());
-// Task.Run(() => new Consumer().StartBasicConsumer3());
-
-var eventBus = app.Services.GetRequiredService<IEventBus>();
-
-eventBus.Subscribe<OrderIntegrationEvent, OrderIntegrationEventHandler1>();
-eventBus.Subscribe<OrderIntegrationEvent, OrderIntegrationEventHandler2>();
-
 
 app.Run();
 public class AddHospCodeHeaderFilter : IOperationFilter
