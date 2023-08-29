@@ -17,10 +17,13 @@ namespace multi_hosp_demo.Controllers
         public MultiHospController(QcContext context,
          IServiceProvider serviceProvider,
          IMultiHospProvider multiHospProvider,
-         IEnumerable<IService> services)
+         IService service
+         //IEnumerable<IService> services
+         )
         {
             _context = context;
             _serviceProvider = serviceProvider;
+            _service = service;
             //_service = services.First(p => p.Key == multiHospProvider.GetHospCode());
         }
 

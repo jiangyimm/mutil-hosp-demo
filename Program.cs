@@ -30,8 +30,27 @@ else
 //AddMultiHosp
 builder.Services.AddMultiHosp();
 
-builder.Services.AddScoped<IService, ServiceA>();
-builder.Services.AddScoped<IService, ServiceB>();
+builder.Services.AddScoped<ServiceA>();
+builder.Services.AddScoped<ServiceB>();
+
+builder.Services.AddScoped(serviceProvider =>
+{
+    var multiHospProvider = serviceProvider.GetService<IMultiHospProvider>();
+    var key = multiHospProvider.GetHospCode();
+    IService? service = null;
+    // var services = serviceProvider.GetServices<IService>();
+    // service = services.Where(x => x.Key == key).First();
+    if (key == "0101")
+    {
+        service = serviceProvider.GetService<ServiceA>();
+    }
+    if (key == "0102")
+    {
+        service = serviceProvider.GetService<ServiceB>();
+    }
+
+    return service;
+});
 
 builder.Services.AddSoapCore();
 builder.Services.AddScoped<ISampleService, SampleService>();
