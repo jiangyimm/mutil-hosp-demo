@@ -27,6 +27,28 @@ namespace multi_hosp_demo.Controllers
             //_service = services.First(p => p.Key == multiHospProvider.GetHospCode());
         }
 
+        [HttpPost("todo-job")]
+        public async Task<IActionResult> AddTodoJob()
+        {
+            var jobTodo = new JobTodo
+            {
+                VisitId = "ZY002323123",
+                VisitType = 2,
+                RecordId = "102223",
+                CreateTime = DateTime.Now,
+                OrgCode = "0101"
+            };
+            await _context.JobTodos.AddAsync(jobTodo);
+            await _context.SaveChangesAsync();
+            return Ok(jobTodo);
+        }
+        [HttpGet("todo-jobs")]
+        public async Task<IActionResult> GetTodoJob()
+        {
+            var todoJobs = await _context.JobTodos.ToListAsync();
+            return Ok(todoJobs);
+        }
+
         [HttpGet("dynamic-service")]
         public async Task<IActionResult> DynamicService()
         {

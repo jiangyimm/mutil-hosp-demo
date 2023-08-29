@@ -5,6 +5,8 @@ using multi_hosp_demo.MultiHosp;
 using SoapCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

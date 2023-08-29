@@ -8,6 +8,7 @@ namespace multi_hosp_demo.Entities
         {
         }
         public virtual DbSet<ExtDept> ExtDepts { get; set; }
+        public virtual DbSet<JobTodo> JobTodos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
