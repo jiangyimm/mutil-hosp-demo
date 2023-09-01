@@ -31,7 +31,7 @@ public class JobRecordStorage : IJobStorageProvider<JobRecord>
                         .Take(parameters.Limit)
                         .ToListAsync(parameters.CancellationToken);
 
-        result.ForEach(p => p.Command = JsonSerializer.Deserialize<JobCommand>(p.JCommand));
+        result.ForEach(p => p.Command = JsonSerializer.Deserialize<JobA>(p.JCommand));
         return result;
     }
 

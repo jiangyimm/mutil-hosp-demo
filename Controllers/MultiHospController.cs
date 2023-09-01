@@ -32,7 +32,7 @@ namespace multi_hosp_demo.Controllers
         [HttpPost("fast-job")]
         public async Task<IActionResult> AddFastEndpointJobs()
         {
-            var job = new JobCommand
+            var job = new JobA
             {
                 InpatId = "1234567890",
                 RecordId = this.GetHashCode().ToString()

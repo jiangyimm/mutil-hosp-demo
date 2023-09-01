@@ -64,8 +64,7 @@ builder.Services.AddSoapCore();
 builder.Services.AddScoped<ISampleService, SampleService>();
 
 //FastEndpoint JobQueue
-builder.Services.AddFastEndpoints()
-                .AddJobQueues<JobRecord, JobRecordStorage>();
+builder.Services.AddJobQueues<JobRecord, JobRecordStorage>();
 
 
 var app = builder.Build();
@@ -85,8 +84,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 //FastEndpoint JobQueue
-app.UseFastEndpoints()
-   .UseJobQueues();
+app.UseJobQueues();
 
 app.MapControllers();
 
