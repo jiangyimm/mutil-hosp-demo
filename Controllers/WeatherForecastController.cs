@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using HttpGetAttribute = Microsoft.AspNetCore.Mvc.HttpGetAttribute;
 
 namespace multi_hosp_demo.Controllers;
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using multi_hosp_demo.Entities;
@@ -11,9 +12,11 @@ using multi_hosp_demo.Entities;
 namespace multihospdemo.Migrations
 {
     [DbContext(typeof(QcContext))]
-    partial class QcContextModelSnapshot : ModelSnapshot
+    [Migration("20230831052736_jobdone")]
+    partial class jobdone
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,6 +71,7 @@ namespace multihospdemo.Migrations
                         .HasColumnName("org_code");
 
                     b.Property<string>("RecordId")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("record_id");
 
@@ -102,6 +106,7 @@ namespace multihospdemo.Migrations
                         .HasColumnName("org_code");
 
                     b.Property<string>("RecordId")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("record_id");
 

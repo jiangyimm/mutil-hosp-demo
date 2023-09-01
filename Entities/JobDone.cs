@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace multi_hosp_demo.Entities;
 
-[Table("job_todo", Schema = "mrqcs")]
-public class JobTodo
+[Table("job_done", Schema = "mrqcs")]
+public class JobDone
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -21,6 +21,9 @@ public class JobTodo
     [Column("create_time")]
     [Required]
     public DateTime CreateTime { get; set; }
+    [Column("exec_time")]
+    [Required]
+    public DateTime ExecTime { get; set; }
     [Column("org_code")]
     [Required]
     public string OrgCode { get; set; }

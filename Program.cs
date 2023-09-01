@@ -1,6 +1,8 @@
+global using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using multi_hosp_demo.Entities;
+using multi_hosp_demo.JobQueues;
 using multi_hosp_demo.MultiHosp;
 using SoapCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -27,6 +29,10 @@ else
     builder.Services.AddDbContext<QcContext>(option =>
             option.UseNpgsql(builder.Configuration["DbconnectString:Control"]));
 }
+
+//AddDbContextFactory For JobDbContext
+builder.Services.AddDbContextFactory<JobDbContext>(option =>
+           option.UseNpgsql(builder.Configuration["DbconnectString:Control"]));
 
 
 //AddMultiHosp
@@ -57,6 +63,11 @@ builder.Services.AddScoped(serviceProvider =>
 builder.Services.AddSoapCore();
 builder.Services.AddScoped<ISampleService, SampleService>();
 
+//FastEndpoint JobQueue
+builder.Services.AddFastEndpoints()
+                .AddJobQueues<JobRecord, JobRecordStorage>();
+
+
 var app = builder.Build();
 
 //UseMultiHosp
@@ -73,10 +84,17 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
+//FastEndpoint JobQueue
+app.UseFastEndpoints()
+   .UseJobQueues();
+
 app.MapControllers();
 
 var qcContext = app.Services.CreateScope().ServiceProvider.GetService<QcContext>();
 await qcContext.Database.MigrateAsync();
+
+var jobContext = app.Services.CreateScope().ServiceProvider.GetService<JobDbContext>();
+await jobContext.Database.MigrateAsync();
 
 app.UseRouting();
 
@@ -88,6 +106,8 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.UseSoapEndpoint<ISampleService>("/ServicePath1.asmx", new SoapEncoderOptions(), SoapSerializer.XmlSerializer);
 });
+
+
 
 app.Run();
 public class AddHospCodeHeaderFilter : IOperationFilter

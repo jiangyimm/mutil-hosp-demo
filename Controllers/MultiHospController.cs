@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using multi_hosp_demo.Entities;
 using multi_hosp_demo.MultiHosp;
 using Microsoft.EntityFrameworkCore;
+using HttpPostAttribute = Microsoft.AspNetCore.Mvc.HttpPostAttribute;
+using multi_hosp_demo.JobQueues;
+using HttpGetAttribute = Microsoft.AspNetCore.Mvc.HttpGetAttribute;
 
 namespace multi_hosp_demo.Controllers
 {
@@ -26,6 +29,18 @@ namespace multi_hosp_demo.Controllers
             _service = service;
             //_service = services.First(p => p.Key == multiHospProvider.GetHospCode());
         }
+        [HttpPost("fast-job")]
+        public async Task<IActionResult> AddFastEndpointJobs()
+        {
+            var job = new JobCommand
+            {
+                InpatId = "1234567890",
+                RecordId = this.GetHashCode().ToString()
+            };
+            await job.QueueJobAsync();
+            return Ok(job);
+        }
+
 
         [HttpPost("todo-job")]
         public async Task<IActionResult> AddTodoJob()
@@ -90,4 +105,6 @@ namespace multi_hosp_demo.Controllers
             return Ok(depts);
         }
     }
+
+
 }
