@@ -75,8 +75,8 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
         {
             QueueID = _queueID,
             Command = command,
-            ExecuteAfter = executeAfter ?? DateTime.UtcNow,
-            ExpireOn = expireOn ?? DateTime.UtcNow.AddHours(4)
+            ExecuteAfter = executeAfter ?? DateTime.Now,
+            ExpireOn = expireOn ?? DateTime.Now.AddHours(4)
         }, ct);
         _sem.Release();
     }
@@ -97,8 +97,9 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
                     CancellationToken = _appCancellation,
                     Match = r => r.QueueID == _queueID &&
                                  !r.IsComplete &&
-                                 DateTime.UtcNow >= r.ExecuteAfter &&
-                                 DateTime.UtcNow <= r.ExpireOn
+                                 DateTime.Now >= r.ExecuteAfter &&
+                                 DateTime.Now <= r.ExpireOn,
+                    JobType = typeof(TJob)
                 });
             }
             catch (Exception x)

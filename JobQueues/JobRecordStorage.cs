@@ -30,8 +30,7 @@ public class JobRecordStorage : IJobStorageProvider<JobRecord>
                         .Where(parameters.Match)
                         .Take(parameters.Limit)
                         .ToListAsync(parameters.CancellationToken);
-
-        result.ForEach(p => p.Command = JsonSerializer.Deserialize<JobA>(p.JCommand));
+        result.ForEach(p => p.Command = JsonSerializer.Deserialize(p.JCommand, parameters.JobType));
         return result;
     }
 
