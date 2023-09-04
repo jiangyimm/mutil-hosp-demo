@@ -47,7 +47,7 @@ public class JobRecordStorage : IJobStorageProvider<JobRecord>
         using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
         await dbContext.JobRecords.Where(p => p.ID == r.ID)
-            .ExecuteUpdateAsync(p => p.SetProperty(x => x.ExecuteAfter, DateTime.UtcNow.AddMinutes(1)), ct);
+            .ExecuteUpdateAsync(p => p.SetProperty(x => x.ExecuteAfter, DateTime.Now.AddMinutes(1)), ct);
     }
 
     public async Task PurgeStaleJobsAsync(StaleJobSearchParams<JobRecord> parameters)

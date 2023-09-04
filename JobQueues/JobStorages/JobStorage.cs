@@ -22,7 +22,7 @@ internal static class JobStorage<TStorageRecord, TStorageProvider>
             {
                 await Provider.PurgeStaleJobsAsync(new()
                 {
-                    Match = r => r.IsComplete || r.ExpireOn <= DateTime.UtcNow,
+                    Match = r => r.IsComplete || r.ExpireOn <= DateTime.Now,
                     CancellationToken = AppCancellation
                 });
             }

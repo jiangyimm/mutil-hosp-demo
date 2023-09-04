@@ -18,8 +18,8 @@ public struct PendingJobSearchParams<TStorageRecord> where TStorageRecord : IJob
     /// <code>
     /// 	r => r.QueueID == "xxx" &amp;&amp;
     /// 	     !r.IsComplete &amp;&amp;
-    /// 	     DateTime.UtcNow &gt;= r.ExecuteAfter &amp;&amp;
-    /// 	     DateTime.UtcNow &lt;= r.ExpireOn
+    /// 	     DateTime.Now &gt;= r.ExecuteAfter &amp;&amp;
+    /// 	     DateTime.Now &lt;= r.ExpireOn
     /// </code>
     /// </summary>
     public Expression<Func<TStorageRecord, bool>> Match { get; internal set; }

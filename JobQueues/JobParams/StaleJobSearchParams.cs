@@ -11,7 +11,7 @@ public struct StaleJobSearchParams<TStorageRecord> where TStorageRecord : IJobSt
     /// <summary>
     /// a boolean lambda expression to match stale job records
     /// <code>
-    ///     r => r.IsComplete || r.ExpireOn &lt;= DateTime.UtcNow
+    ///     r => r.IsComplete || r.ExpireOn &lt;= DateTime.Now
     /// </code>
     /// </summary>
     public Expression<Func<TStorageRecord, bool>> Match { get; internal set; }
