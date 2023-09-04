@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FastEndpoints;
 
-internal static class Extensions
+internal static class UtilExtensions
 {
     internal static string ToHash(this string input)
     {
