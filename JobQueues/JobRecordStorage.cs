@@ -39,7 +39,8 @@ public class JobRecordStorage : IJobStorageProvider<JobRecord>
         using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
         await dbContext.JobRecords.Where(p => p.ID == r.ID)
-            .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsComplete, true), ct);
+            .ExecuteUpdateAsync(p => p.SetProperty(x => x.IsComplete, r.IsComplete)
+                                    .SetProperty(x => x.ExecuteAt, r.ExecuteAt), ct);
     }
 
     public async Task OnHandlerExecutionFailureAsync(JobRecord r, Exception exception, CancellationToken ct)

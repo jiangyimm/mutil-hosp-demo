@@ -1,4 +1,6 @@
-global using FastEndpoints;
+global using AspNetCore.JobQueue.Abstractions;
+global using AspNetCore.JobQueue.Extensions;
+global using AspNetCore.JobQueue.JobParams;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using multi_hosp_demo.Entities;
