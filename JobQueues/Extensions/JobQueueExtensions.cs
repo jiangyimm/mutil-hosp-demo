@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using multi_hosp_demo.JobQueues;
 
 namespace FastEndpoints;
 
@@ -25,47 +26,39 @@ public static class JobQueueExtensions
         tStorageRecord = typeof(TStorageRecord);
         svc.AddSingleton<TStorageProvider>();
         svc.AddSingleton(typeof(JobQueue<,,>));
-        svc.AddClassesAsImplementedInterface(Assembly.GetEntryAssembly(), typeof(IJobHandler<>));
+        var jobHandlerTypes = GetTypesAssignableTo(typeof(IJobHandler<>));
+        foreach (var type in jobHandlerTypes)
+        {
+            foreach (var implementedInterface in type.ImplementedInterfaces)
+            {
+                svc.AddSingleton(implementedInterface, type);
+            }
+        }
 
         return svc;
     }
 
-    private static void AddClassesAsImplementedInterface(
-       this IServiceCollection services,
-       Assembly assembly,
-       Type compareType,
-       ServiceLifetime lifetime = ServiceLifetime.Scoped)
+    private static IEnumerable<Assembly> GetAssemblies()
     {
-        assembly.GetTypesAssignableTo(compareType).ForEach((type) =>
-        {
-            foreach (var implementedInterface in type.ImplementedInterfaces)
-            {
-                switch (lifetime)
-                {
-                    case ServiceLifetime.Scoped:
-                        services.AddScoped(implementedInterface, type);
-                        break;
-                    case ServiceLifetime.Singleton:
-                        services.AddSingleton(implementedInterface, type);
-                        break;
-                    case ServiceLifetime.Transient:
-                        services.AddTransient(implementedInterface, type);
-                        break;
-                }
-            }
-        });
+        var assemblys = AppDomain.CurrentDomain.GetAssemblies();
+        return assemblys;
     }
 
-    private static List<TypeInfo> GetTypesAssignableTo(this Assembly assembly, Type compareType)
+    private static IEnumerable<TypeInfo> GetTypesAssignableTo(Type compareType)
     {
-        var typeInfoList = assembly.DefinedTypes.Where(x => x.IsClass
-                            && !x.IsAbstract
-                            && x != compareType
-                            && x.GetInterfaces()
-                                    .Any(i => i.IsGenericType
-                                            && i.GetGenericTypeDefinition() == compareType))?.ToList();
-
-        return typeInfoList;
+        var typeInfos = new List<TypeInfo>();
+        var assemblys = GetAssemblies();
+        foreach (var assembly in assemblys)
+        {
+            var assTypes = assembly.DefinedTypes.Where(x => x.IsClass
+                                && !x.IsAbstract
+                                && x != compareType
+                                && x.GetInterfaces()
+                                        .Any(i => i.IsGenericType
+                                                && i.GetGenericTypeDefinition() == compareType))?.ToList();
+            typeInfos.AddRange(assTypes);
+        }
+        return typeInfos;
     }
 
     /// <summary>
@@ -75,9 +68,8 @@ public static class JobQueueExtensions
     /// <exception cref="InvalidOperationException">thrown when no commands/handlers have been detected</exception>
     public static IApplicationBuilder UseJobQueues(this IApplicationBuilder app, Action<JobQueueOptions>? options = null)
     {
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        var jobTypes = assembly.GetTypes().Where(t => t.IsAssignableTo(typeof(IJob)));
-        //var registry = app.ApplicationServices.GetRequiredService<CommandHandlerRegistry>();
+        var assemblies = GetAssemblies();
+        var jobTypes = assemblies.SelectMany(p => p.GetTypes()).Where(t => t != typeof(IJob) && t.IsAssignableTo(typeof(IJob)));
 
         if (!jobTypes.Any())
             throw new InvalidOperationException("No Commands/Handlers found in the system! Have you called AddFastEndpoints() yet?");
@@ -85,14 +77,12 @@ public static class JobQueueExtensions
         var opts = new JobQueueOptions();
         options?.Invoke(opts);
 
-        foreach (var tCommand in jobTypes)
+        foreach (var tJob in jobTypes)
         {
-            var tJobQ = typeof(JobQueue<,,>).MakeGenericType(tCommand, tStorageRecord, tStorageProvider);
+            var tJobQ = typeof(JobQueue<,,>).MakeGenericType(tJob, tStorageRecord, tStorageProvider);
             var jobQ = app.ApplicationServices.GetRequiredService(tJobQ);
-            opts.SetExecutionLimits(tCommand, (JobQueueBase)jobQ);
+            opts.SetExecutionLimits(tJob, (JobQueueBase)jobQ);
         }
-
-        ServiceResolver.SetRootProvider(app.ApplicationServices);
 
         return app;
     }
@@ -100,10 +90,10 @@ public static class JobQueueExtensions
     /// <summary>
     /// queues up a given command in the respective job queue for that command type.
     /// </summary>
-    /// <param name="cmd">the command to be queued</param>
+    /// <param name="job">the command to be queued</param>
     /// <param name="executeAfter">if set, the job won't be executed before this date/time. if unspecified, execution is attempted as soon as possible.</param>
     /// <param name="expireOn">if set, job will be considered stale/expired after this date/time. if unspecified, jobs expire after 4 hours of creation.</param>
     /// <param name="ct">cancellation token</param>
-    public static Task QueueJobAsync(this IJob cmd, DateTime? executeAfter = null, DateTime? expireOn = null, CancellationToken ct = default)
-        => JobQueueBase.AddToQueueAsync(cmd, executeAfter, expireOn, ct);
+    public static Task QueueJobAsync(this IJob job, DateTime? executeAfter = null, DateTime? expireOn = null, CancellationToken ct = default)
+        => JobQueueBase.AddToQueueAsync(job, executeAfter, expireOn, ct);
 }

@@ -34,5 +34,8 @@ public struct PendingJobSearchParams<TStorageRecord> where TStorageRecord : IJob
     /// </summary>
     public CancellationToken CancellationToken { get; internal set; }
 
-    public Type JobType { get; internal set; }
+    /// <summary>
+    /// the type of job
+    /// </summary>
+    public Type TypeOfJob { get; internal set; }
 }

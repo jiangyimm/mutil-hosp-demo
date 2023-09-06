@@ -4,7 +4,7 @@ internal static class JobStorage<TStorageRecord, TStorageProvider>
     where TStorageRecord : IJobStorageRecord, new()
     where TStorageProvider : IJobStorageProvider<TStorageRecord>
 {
-    internal static TStorageProvider Provider { private get; set; }
+    internal static TStorageProvider StorageProvider { private get; set; }
     internal static CancellationToken AppCancellation { private get; set; }
 
     static JobStorage()
@@ -20,7 +20,7 @@ internal static class JobStorage<TStorageRecord, TStorageProvider>
 
             try
             {
-                await Provider.PurgeStaleJobsAsync(new()
+                await StorageProvider.PurgeStaleJobsAsync(new()
                 {
                     Match = r => r.IsComplete || r.ExpireOn <= DateTime.Now,
                     CancellationToken = AppCancellation

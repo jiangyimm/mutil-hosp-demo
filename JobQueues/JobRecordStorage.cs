@@ -18,7 +18,7 @@ public class JobRecordStorage : IJobStorageProvider<JobRecord>
     {
         using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-        r.JCommand = JsonSerializer.SerializeToElement(r.Command);
+        r.JCommand = JsonSerializer.SerializeToElement(r.JobData);
         await dbContext.JobRecords.AddAsync(r, ct);
         await dbContext.SaveChangesAsync(ct);
     }
@@ -30,7 +30,7 @@ public class JobRecordStorage : IJobStorageProvider<JobRecord>
                         .Where(parameters.Match)
                         .Take(parameters.Limit)
                         .ToListAsync(parameters.CancellationToken);
-        result.ForEach(p => p.Command = JsonSerializer.Deserialize(p.JCommand, parameters.JobType));
+        result.ForEach(p => p.JobData = JsonSerializer.Deserialize(p.JCommand, parameters.TypeOfJob));
         return result;
     }
 

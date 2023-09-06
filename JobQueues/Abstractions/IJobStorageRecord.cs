@@ -11,7 +11,7 @@ public interface IJobStorageRecord
     /// the actual command object that will be embedded in the storage record.
     /// if your database doesn't support embedding objects, you may have to serialize the object and store it in this property.
     /// </summary>
-    object Command { get; set; }
+    object JobData { get; set; }
 
     /// <summary>
     /// the job will not be executed before this date/time. by default it will automatically be set to the time of creation allowing jobs to be

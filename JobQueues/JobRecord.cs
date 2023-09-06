@@ -13,7 +13,7 @@ public class JobRecord : IJobStorageRecord
     [Column("queue_id")]
     public string QueueID { get; set; }
     [NotMapped]
-    public object Command { get; set; }
+    public object JobData { get; set; }
     [Column("j_command")]
     public JsonElement JCommand { get; set; }
     // {

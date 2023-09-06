@@ -6,58 +6,59 @@ using System.CodeDom;
 using System.Collections.Concurrent;
 
 namespace FastEndpoints;
-
 internal abstract class JobQueueBase
 {
-    //key: tCommand
-    //val: job queue for the command type
-    //values get created when the DI container resolves each job queue type and the ctor is run.
-    //see ctor in JobQueue<TCommand, TStorageRecord, TStorageProvider>
-    protected static readonly ConcurrentDictionary<Type, JobQueueBase> _allQueues = new();
+    internal static readonly ConcurrentDictionary<Type, JobQueueBase> _allQueues = new();
 
-    protected abstract Task StoreJobAsync(object command, DateTime? executeAfter, DateTime? expireOn, CancellationToken ct);
+    protected abstract Task StoreJobAsync(object job, DateTime? executeAfter, DateTime? expireOn, CancellationToken ct);
 
-    internal abstract void SetExecutionLimits(int concurrencyLimit, TimeSpan executionTimeLimit);
+    internal abstract void SetExecutionLimits(int ConcurrencyLimit, TimeSpan executionTimeLimit);
 
-    internal static Task AddToQueueAsync(IJob command, DateTime? executeAfter, DateTime? expireOn, CancellationToken ct)
+    internal static Task AddToQueueAsync(object job, DateTime? executeAfter, DateTime? expireOn, CancellationToken ct)
     {
-        var tCommand = command.GetType();
+        var typeofjob = job.GetType();
 
-        if (!_allQueues.TryGetValue(tCommand, out var queue))
-            throw new InvalidOperationException($"A job queue has not been registered for [{tCommand.FullName}]");
+        if (!_allQueues.TryGetValue(typeofjob, out var queue))
+        {
+            throw new InvalidOperationException($"A job queue has not been registered for [{typeofjob.FullName}]");
+        }
 
-        return queue.StoreJobAsync(command, executeAfter, expireOn, ct);
+        return queue.StoreJobAsync(job, executeAfter, expireOn, ct);
     }
 }
-
 // created by DI as singleton
 internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueueBase
     where TJob : IJob
     where TStorageRecord : IJobStorageRecord, new()
     where TStorageProvider : IJobStorageProvider<TStorageRecord>
 {
-    private static readonly Type _tCommand = typeof(TJob);
-    private static readonly string _tCommandName = _tCommand.FullName!;
+    private static readonly Type _tJob = typeof(TJob);
+    private static readonly string _tJobName = _tJob.FullName!;
 
     //public due to: https://github.com/FastEndpoints/FastEndpoints/issues/468
-    public static readonly string _queueID = _tCommandName.ToHash();
+    public static readonly string _queueID = _tJobName.ToHash();
 
     private readonly ParallelOptions _parallelOptions = new() { MaxDegreeOfParallelism = Environment.ProcessorCount };
     private readonly CancellationToken _appCancellation;
     private readonly TStorageProvider _storage;
     private readonly SemaphoreSlim _sem = new(0);
     private readonly ILogger _log;
+    private readonly IServiceProvider _serviceProvider;
     private TimeSpan _executionTimeLimit = Timeout.InfiniteTimeSpan;
     private bool _isInUse;
 
-    public JobQueue(TStorageProvider storageProvider, IHostApplicationLifetime appLife, ILogger<JobQueue<TJob, TStorageRecord, TStorageProvider>> logger)
+    public JobQueue(TStorageProvider storageProvider,
+        IHostApplicationLifetime appLife,
+        IServiceProvider serviceProvider,
+        ILogger<JobQueue<TJob, TStorageRecord, TStorageProvider>> logger)
     {
-        _allQueues[_tCommand] = this;
+        _allQueues[_tJob] = this;
         _storage = storageProvider;
         _appCancellation = appLife.ApplicationStopping;
+        _serviceProvider = serviceProvider;
         _parallelOptions.CancellationToken = _appCancellation;
         _log = logger;
-        JobStorage<TStorageRecord, TStorageProvider>.Provider = _storage;
+        JobStorage<TStorageRecord, TStorageProvider>.StorageProvider = _storage;
         JobStorage<TStorageRecord, TStorageProvider>.AppCancellation = _appCancellation;
     }
 
@@ -68,15 +69,15 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
         _ = CommandExecutorTask();
     }
 
-    protected override async Task StoreJobAsync(object command, DateTime? executeAfter, DateTime? expireOn, CancellationToken ct)
+    protected override async Task StoreJobAsync(object job, DateTime? executeAfter, DateTime? expireOn, CancellationToken ct)
     {
         _isInUse = true;
         await _storage.StoreJobAsync(new()
         {
             QueueID = _queueID,
-            Command = command,
+            JobData = job,
             ExecuteAfter = executeAfter ?? DateTime.Now,
-            ExpireOn = expireOn ?? DateTime.Now.AddHours(4)
+            ExpireOn = expireOn ?? DateTime.Now.AddDays(1)
         }, ct);
         _sem.Release();
     }
@@ -99,12 +100,12 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
                                  !r.IsComplete &&
                                  DateTime.Now >= r.ExecuteAfter &&
                                  DateTime.Now <= r.ExpireOn,
-                    JobType = typeof(TJob)
+                    TypeOfJob = typeof(TJob)
                 });
             }
             catch (Exception x)
             {
-                _log.StorageRetrieveError(_queueID, _tCommandName, x.Message);
+                _log.StorageRetrieveError(_queueID, _tJobName, x.Message);
                 await Task.Delay(5000);
                 continue;
             }
@@ -132,13 +133,14 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
         {
             try
             {
-                var job = (TJob)record.Command;
-                var handler = ServiceResolver.GetService<IJobHandler<TJob>>();
+                var job = (TJob)record.JobData;
+                using var serviceScope = _serviceProvider.CreateScope();
+                var handler = serviceScope.ServiceProvider.GetService<IJobHandler<TJob>>();
                 await handler.ExecuteAsync(job, new CancellationTokenSource(_executionTimeLimit).Token);
             }
             catch (Exception x)
             {
-                _log.CommandExecutionCritical(_tCommandName, x.Message);
+                _log.CommandExecutionCritical(_tJobName, x.Message);
 
                 while (!_appCancellation.IsCancellationRequested)
                 {
@@ -149,7 +151,7 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
                     }
                     catch (Exception xx)
                     {
-                        _log.StorageOnExecutionFailureError(_queueID, _tCommandName, xx.Message);
+                        _log.StorageOnExecutionFailureError(_queueID, _tJobName, xx.Message);
 
 #pragma warning disable CA2016
                         await Task.Delay(5000);
@@ -170,7 +172,7 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
                 }
                 catch (Exception x)
                 {
-                    _log.StorageMarkAsCompleteError(_queueID, _tCommandName, x.Message);
+                    _log.StorageMarkAsCompleteError(_queueID, _tJobName, x.Message);
 
 #pragma warning disable CA2016
                     await Task.Delay(5000);
@@ -179,4 +181,6 @@ internal sealed class JobQueue<TJob, TStorageRecord, TStorageProvider> : JobQueu
             }
         }
     }
+
+
 }
