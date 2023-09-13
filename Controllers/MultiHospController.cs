@@ -32,13 +32,19 @@ namespace multi_hosp_demo.Controllers
         [HttpPost("fast-job")]
         public async Task<IActionResult> AddFastEndpointJobs()
         {
-            var job = new JobA
+            var jobA = new JobA
             {
                 InpatId = "1234567890",
                 RecordId = this.GetHashCode().ToString()
             };
-            await job.QueueJobAsync();
-            return Ok(job);
+            await jobA.QueueJobAsync();
+            var jobB = new JobB
+            {
+                PatientName = "嘿嘿嘿",
+                Sex = this.GetHashCode().ToString()
+            };
+            await jobB.QueueJobAsync();
+            return Ok(new { jobA, jobB });
         }
 
 
